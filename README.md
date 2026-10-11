@@ -496,6 +496,10 @@ lo tira todo —sin distinguir qué tabla tocó— y la pantalla siguiente lee d
 base. Lo que mira para editar no se guarda nunca. El precio: un cambio hecho
 por fuera de la aplicación tarda hasta una hora en verse.
 
+Diez días después, el 11 de octubre, el contador de Turso iba por 6,37 millones
+de filas leídas de los 500 que da el plan al mes: un 1,3 %, donde septiembre se
+lo había comido entero.
+
 ## El respaldo
 
 ```bash
@@ -520,6 +524,12 @@ restaurado nunca no es un respaldo.
 ruta no tiene sesión —un cron no tiene cookie—: la guarda `CRON_SECRET`. Si la
 base no se puede leer no se manda nada, ni siquiera un aviso; lo pidió así. La
 copia que hay en `.datos/` depende de que alguien se acuerde; ésta no.
+
+De lo que sí depende es de **tres registros DNS del dominio**, los que Resend
+pide para dejar enviar en su nombre. Sin ellos el correo no sale, y como no hay
+aviso de fallo, tampoco se entera nadie: el primer lunes pasó exactamente eso.
+Se crearon el 11 de octubre de 2026, se lanzó a mano, llegó, y el adjunto se
+restauró entero. Cuáles son y cómo comprobarlos, en `CLAUDE.md`.
 
 ## Notas técnicas
 
@@ -559,8 +569,9 @@ Las variables ya están en Vercel y las cuatro columnas nuevas ya están en su
 base —respaldo del 19 de agosto de 2026 hecho y restaurado antes de tocarla, y
 las cifras cuadrando al céntimo después—. Queda:
 
-- Ver llegar el primer respaldo por correo, el lunes 5 de octubre de 2026. El
-  envío real no se ha probado.
+- Ver llegar el respaldo por correo a su hora, sin que nadie lo lance: el
+  primero que toca es el del lunes 12 de octubre de 2026. El envío ya está
+  probado —el del día 11, a mano—; lo que falta por ver es el cron.
 
 - Verle entrar la primera vez desde su móvil. La contraseña es la misma que ya
   usaba, así que lo único nuevo para él es la pantalla.

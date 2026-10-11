@@ -29,7 +29,9 @@ salieron tres cosas, cada una con su sección: las consultas dejaron de leer de
 más y el índice culpable se cambió en su base; lo que suma todos los servicios
 se guarda entre peticiones y cada acción lo invalida; y la base se manda sola
 por correo cada lunes. Ver *Turso cobra por fila leída* y *El respaldo semanal
-por correo*.
+por correo*. El día 11 se miraron las dos cosas: el contador de Turso iba por
+el 1,3 % de la cuota, y el correo no había salido nunca —faltaba el DNS de
+Resend— y desde ese día sale.
 
 **Sólo hay una base de datos**, la de su cuenta. La vieja se borró a conciencia
 para que nadie la confunda con la buena. El respaldo vive fuera de git, en
@@ -263,6 +265,38 @@ Cada lunes de madrugada el cron de Vercel (`vercel.json`) llama a
   Vercel.
 - El horario del cron va en UTC (`0 5 * * 1`): las 6 en invierno y las 7 en
   verano, hora de Madrid.
+- **Depende de tres registros DNS en Hostinger**, que es quien lleva el DNS de
+  `limpiezaselimperio.es`: un `TXT` en `resend._domainkey` (DKIM) y un `MX` y un
+  `TXT` en `send` (SPF). Sin ellos Resend no da el dominio por verificado y
+  rechaza el envío con un 403 —«The limpiezaselimperio.es domain is not
+  verified»—, que aquí sale como un 500 y «el correo no salió». **Pasó**: el
+  dominio se dio de alta en Resend el 1 de octubre de 2026 y los registros no se
+  crearon hasta el día 11, así que el del lunes 5 no pudo salir y nadie se
+  enteró —no hay correo de fallo, a propósito—. El primero que llegó fue el del
+  11, lanzado a mano. **No los borres al ordenar el DNS.** Los del buzón (`MX` a
+  `mx1`/`mx2.hostinger.com`, el SPF de la raíz y `_dmarc`) son otros y tampoco
+  se tocan.
+
+Para saber si sigue en pie sin entrar en ninguna cuenta, los tres tienen que
+contestar:
+
+```bash
+d=limpiezaselimperio.es
+dig +short TXT resend._domainkey.$d   # p=MIGf…
+dig +short MX  send.$d                # 10 feedback-smtp.us-east-1.amazonses.com.
+dig +short TXT send.$d                # "v=spf1 include:amazonses.com ~all"
+```
+
+**Para lanzarlo a mano**, el botón *Run* de Settings → Cron Jobs en su proyecto
+de Vercel. El botón no dice nada: el resultado está en Logs, en la fila de
+`/api/respaldo`. Un 200 es que Resend lo aceptó; un 401, que `CRON_SECRET` falta
+o no coincide; un 500 lleva al lado una línea que empieza por `Respaldo
+semanal:` y nombra el paso que falló. Desde aquí no se puede lanzar: el secreto
+sólo existe en su Vercel. **Los registros de Vercel caducan enseguida**, así que
+un lunes sin correo hay que mirarlo relanzándolo, no buscando el fallo antiguo.
+
+Comprobado el 11 de octubre de 2026 con el adjunto que le llegó: restaura sin
+errores, con el margen calculado, el reparto cuadrado y el índice parcial.
 
 ### Comprobar que la base sigue cuadrando
 
@@ -322,9 +356,12 @@ cada pantalla (*Lo que se guarda entre peticiones*).
 El 1 de octubre de 2026 la cuenta amaneció bloqueada —«reads are blocked»— por
 pasarse de cuota en septiembre, y siguió así hasta unas ocho horas después de
 que el contador se pusiera a cero. El login cargaba y todo lo demás estaba roto.
-No se llegó a saber qué límite saltó: el panel ya enseñaba ceros. Lo de aquí
-abajo es la causa más probable, deducida de los planes de consulta, no medida
-por Turso.
+Ese día no se supo qué límite saltó, porque el panel ya enseñaba ceros. El 11
+de octubre la gráfica de treinta días sí lo dejó ver: plan gratuito, **500
+millones de filas leídas al mes**, y un septiembre con días de entre 10 y 25
+millones y un pico de unos 65 a final de mes —leído de la gráfica, a ojo—. Lo de
+aquí abajo sigue siendo la causa más probable, deducida de los planes de
+consulta, no medida consulta a consulta por Turso.
 
 **La raíz era un índice, `idx_servicios_borrador`, sobre la columna entera.**
 Casi todo es `borrador = 0`, así que no descartaba nada, pero SQLite —que aquí
@@ -417,8 +454,17 @@ documento, los gastos—: eso sale siempre de la base.
 Comprobado en local con el build de producción sobre una copia de la base real:
 un cambio hecho por fuera no se ve hasta que una acción invalida; tras la acción
 se ve en la siguiente carga; sin cookie no se sirve nada; y 25 pantallas y
-exportaciones dan el mismo texto que sin guardar nada. **En Vercel no se ha
-podido medir**: la señal es el contador de filas leídas del panel de Turso.
+exportaciones dan el mismo texto que sin guardar nada. En Vercel no se puede
+medir: la señal es el contador de filas leídas del panel de Turso.
+
+**Medido ahí el 11 de octubre de 2026**: 6,37 millones de filas leídas en lo que
+iba de mes, de los 500 del plan —un 1,3 % con un tercio del mes pasado—, y la
+gráfica diaria pegada al eje desde el día 2. Dos cosas que esa cifra no dice:
+cómo se reparte entre los días —parte será del propio día 1, antes del
+despliegue— y cuánto se debe al índice y cuánto a lo guardado. Para lo primero,
+*Analytics → Top Queries → This month* en su panel. Como referencia, un respaldo
+entero son unas 4.200 filas. A esa cuenta sólo se llega desde su Vercel
+(Storage → la base → *Open in Turso*): el CLI de aquí no tiene sesión.
 
 ## El libro modelo de 2026
 
